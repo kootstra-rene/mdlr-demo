@@ -2,17 +2,13 @@ mdlr('db-mon:environment', m => {
 
   let counter = 0;
   let data;
-  let _base;
-  (_base = String.prototype).lpad || (_base.lpad = function (padding, toLength) {
-    return padding.repeat((toLength - this.length) / padding.length).concat(this);
-  });
 
   function formatElapsed(value) {
     let str = parseFloat(value).toFixed(2);
     if (value > 60) {
       minutes = Math.floor(value / 60);
       comps = (value % 60).toFixed(2).split('.');
-      seconds = comps[0].lpad('0', 2);
+      seconds = comps[0].padStart(2, '0');
       ms = comps[1];
       str = minutes + ":" + seconds + "." + ms;
     }
@@ -20,7 +16,7 @@ mdlr('db-mon:environment', m => {
   }
 
   function getElapsedClassName(elapsed) {
-    let className = 'Query elapsed';
+    let className = 'query';
     if (elapsed >= 10.0) {
       className += ' warn_long';
     }

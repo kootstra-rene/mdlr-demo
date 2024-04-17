@@ -35,7 +35,7 @@ mdlr('[web]demo:db-mon:stats-render', m => {
       const { lastTime, history } = this;
       const rate = 1000 / (now - lastTime);
 
-      if (rate == Infinity) return;
+      if (rate === Infinity) return;
 
       history.push(rate);
       if (history.length > 100) {
@@ -43,8 +43,8 @@ mdlr('[web]demo:db-mon:stats-render', m => {
       }
 
       let sum = 0;
-      for (let i = 0; i < history.length; ++i) {
-        sum = sum + history[i];
+      for (let rate of history) {
+        sum = sum + rate;
       }
 
       this.rate = (sum / history.length);
@@ -97,7 +97,7 @@ mdlr('[web]demo:db-mon:stats-memory', m => {
     }
   `;
 
-  const perf = performance || {};
+  const perf = performance.memory ? performance : { memory: { usedJSHeapSize: 0 } };
 
   const bytesToSize = (bytes, nFractDigit) => {
     let sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -112,7 +112,7 @@ mdlr('[web]demo:db-mon:stats-memory', m => {
     if (!dom) return;
 
     let child = dom.appendChild(dom.firstChild);
-    child.style.height = height + 'px';
+    child.style.height = height.toFixed(2) + 'px';
     if (color) {
       child.style.backgroundColor = color;
     }
@@ -138,7 +138,7 @@ mdlr('[web]demo:db-mon:stats-memory', m => {
 
       let normValue = heapSize / (30 * 1024 * 1024);
       let height = Math.min(30, 30 - normValue * 30);
-      let color	= delta < 0 ? '#830' : '#131';
+      let color = delta < 0 ? '#830' : '#131';
       updateGraph(this.graph, height, color);
     }
   }

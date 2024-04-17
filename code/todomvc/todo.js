@@ -33,6 +33,7 @@ mdlr('[web]demo:mvc-todo-item', m => {
     height: 60px;
 
     > completed-icon {
+      display: inline;
       position: absolute;
       top: calc(50% - 20px);
     }
@@ -48,7 +49,6 @@ mdlr('[web]demo:mvc-todo-item', m => {
       font-weight: 400;
       color: #484848;
       font-size: 24px;
-      box-sizing: border-box;
       width: calc(100% - 45px);
 
       &:focus:not([readonly]) {
@@ -88,6 +88,12 @@ mdlr('[web]demo:mvc-todo-item', m => {
 
     &:hover > button {
       display: block;
+    }
+  `;
+
+  m.global`
+    body {
+      contain: unset;
     }
   `;
 
@@ -191,7 +197,6 @@ mdlr('[web]demo:mvc-todo', m => {
 
   m.style`
     * {
-      box-sizing: border-box;
       -webkit-font-smoothing: antialiased;
       text-rendering: optimizeLegibility;
     }

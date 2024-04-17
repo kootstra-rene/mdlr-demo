@@ -36,7 +36,6 @@ mdlr('[web]demo:realworld-app', m => {
   m.style`
     display: block;
     height: 100%;
-    box-sizing: border-box;
     overflow: auto;
     background-color: white;
   `
