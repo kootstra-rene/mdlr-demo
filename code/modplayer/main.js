@@ -228,12 +228,12 @@ mdlr('[web]demo:modplayer-app', m => {
 
       const audio = new AudioContext;
       // const audio = new AudioContext({sampleRate:28837}); // paula
-      await audio.audioWorklet.addModule('/app/unit/modplayer:worklet');
+      await audio.audioWorklet.addModule('/app/unit/demo:modplayer:worklet');
 
       const [, channels, num_channels] = state;
       this.channels = channels;
       this.num_channels = num_channels;
-      worklet = this.worklet = new AudioWorkletNode(audio, 'modplayer:worklet', {
+      worklet = this.worklet = new AudioWorkletNode(audio, 'demo:modplayer:worklet', {
         numberOfOutputs: num_channels,
         numberOfInputs: 0,
       });

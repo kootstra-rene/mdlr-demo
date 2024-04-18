@@ -1,4 +1,4 @@
-mdlr('modplayer:worklet:channel', m => {
+mdlr('demo:modplayer:worklet:channel', m => {
 
   const [notes, samples] = m.require(':inject');
 
@@ -259,7 +259,7 @@ mdlr('modplayer:worklet:channel', m => {
   return self;
 })
 
-mdlr('modplayer:worklet:player', m => {
+mdlr('demo:modplayer:worklet:player', m => {
 
   let port;
   let channels;
@@ -440,19 +440,19 @@ mdlr('modplayer:worklet:player', m => {
   return self;
 })
 
-mdlr('modplayer:worklet', m => {
+mdlr('demo:modplayer:worklet', m => {
 
-  registerProcessor('modplayer:worklet', class extends AudioWorkletProcessor {
+  registerProcessor('demo:modplayer:worklet', class extends AudioWorkletProcessor {
 
     channels = [];
-    player = m.require('modplayer:worklet:player');
+    player = m.require('demo:modplayer:worklet:player');
 
     constructor() {
       super();
 
       this.port.onmessage = ({ data }) => {
         const [, channels] = data;
-        this.channels = channels.map(channel => m.require('modplayer:worklet:channel', { ':inject': channel }));
+        this.channels = channels.map(channel => m.require('demo:modplayer:worklet:channel', { ':inject': channel }));
         this.player.init(this, sampleRate);
         this.player.play(data);
       }
