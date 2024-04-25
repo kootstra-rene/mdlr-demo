@@ -1,5 +1,7 @@
 mdlr('[web]demo:realworld-article-comments', m => {
 
+  const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
   m.html`
   <div class="col-xs-12 col-md-8 offset-md-2">
 
@@ -32,10 +34,6 @@ mdlr('[web]demo:realworld-article-comments', m => {
 
   </div>`;
 
-  m.style`
-    display: contents;
-  `;
-
   return class {
     api;
     user;
@@ -48,9 +46,7 @@ mdlr('[web]demo:realworld-article-comments', m => {
     }
 
     formatDate(comment) {
-      const options = { month: 'long', day: 'numeric', year: 'numeric' };
-
-      return new Intl.DateTimeFormat('en-US', options).format(new Date(comment?.updatedAt || '1970-01-01'));
+      return dateFormatter.format(new Date(comment?.updatedAt || '1970-01-01'));
     }
   }
 

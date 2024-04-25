@@ -47,6 +47,10 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
         }
       }
 
+      &[class=""] > * {
+        display: none;
+      }
+
       > div {
         background-color: #fff;
         background-clip: padding-box;
@@ -62,7 +66,7 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
         text-align: left;
         top: 0;
         white-space: normal;
-        z-index: 1010;
+        z-index: 2;
         margin-left: -10px;
 
         > div.popover-content {
@@ -115,6 +119,10 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
   return class {
     dbname;
     lastSample = {};
+
+    // beforeRender() {
+    //   return 1000/24;
+    // }
   }
 
 })
@@ -190,7 +198,7 @@ mdlr('[web]demo:db-mon:settings-panel', m => {
 
 mdlr('[web]demo:db-mon', m => {
 
-  const ENV = m.require('db-mon:environment');
+  const ENV = m.require('demo:db-mon:environment');
 
   m.require('[web]demo:db-mon:settings-panel');
   m.require('[web]demo:db-mon:stats-render');

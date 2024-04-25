@@ -1,4 +1,4 @@
-mdlr('api:realworld', m => {
+mdlr('demo:realworld-api', m => {
 
   const origin = 'https://api.realworld.io/api';
 

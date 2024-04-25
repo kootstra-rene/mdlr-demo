@@ -1,4 +1,4 @@
-mdlr('db-mon:environment', m => {
+mdlr('demo:db-mon:environment', m => {
 
   let counter = 0;
   let data;
@@ -74,7 +74,9 @@ mdlr('db-mon:environment', m => {
       return {
         query: "***",
         formatElapsed: "",
-        elapsedClassName: ""
+        elapsedClassName: "",
+        elapsed: null,
+        waiting: null
       };
     }
   }

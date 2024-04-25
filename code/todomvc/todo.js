@@ -1,8 +1,8 @@
 mdlr('[web]demo:mvc-todo:completed-icon', m => {
 
   m.html`
-  <svg width="40" height="40" viewBox="-10 -18 100 135">
-    <circle cx="50" cy="50" r="50" fill="none" stroke={completed?"#59A193":"#949494"} stroke-width="3"/>
+  <svg viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="48" fill="none" stroke={completed?"#59A193":"#949494"} stroke-width="3"/>
     <path fill={completed?"#3EA390":"#0000"} d="M72 25L42 71 27 56l-4 4 20 20 34-52z"/>
   </svg>
   `;
@@ -21,7 +21,7 @@ mdlr('[web]demo:mvc-todo-item', m => {
   const ESCAPE_KEY = 27;
 
   m.html`
-  {:self checked={!!completed} text="{!!completed}"}
+  {:self checked={!!completed}}
   <completed-icon{=} on{click=select}/>
   <input on{dblclick=()=>readonly=false} on{keydown=edit} on{blur=submit} value={description} readonly={}/>
   <button on{click=destroy}/>
@@ -35,11 +35,15 @@ mdlr('[web]demo:mvc-todo-item', m => {
     > completed-icon {
       display: inline;
       position: absolute;
-      top: calc(50% - 20px);
+      top: 0;
+      width: 32px;
+      height: 32px;
+      margin: calc((60px - 32px)/2) calc(45px - 32px);
     }
 
     > input {
       all: unset;
+      box-sizing: border-box;
       word-break: break-all;
       margin-left: 45px;
       padding: 15px;
@@ -53,7 +57,7 @@ mdlr('[web]demo:mvc-todo-item', m => {
 
       &:focus:not([readonly]) {
         position: relative;
-        z-index: 100;
+        z-index: 2;
         border: 1px solid #999;
         box-shadow: inset 0 -1px 5px 0 rgba(0, 0, 0, 0.2);
         box-shadow: 0 0 2px 2px #CF7D7D;
@@ -234,6 +238,7 @@ mdlr('[web]demo:mvc-todo', m => {
       height: 65px;
       position: relative;
       line-height: 1.4em;
+      z-index: 2;
 
       > input[type="checkbox"] {
         appearance: none;

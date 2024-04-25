@@ -11,7 +11,7 @@ mdlr('[web]demo:realworld-app', m => {
   m.require('[web]demo:realworld-profile');
   m.require('[web]demo:realworld-footer');
 
-  const api = m.require('api:realworld');
+  const api = m.require('demo:realworld-api');
 
   // todo: fix redraw on #if, :else, #each
   m.html`
