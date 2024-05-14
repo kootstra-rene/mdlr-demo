@@ -13,11 +13,11 @@ mdlr('canvas:matrix', m => {
 
     const w = canvas.width = doc.clientWidth;
     const h = canvas.height = doc.offsetHeight;
-    const cols = Math.ceil(w / 12);
+    const cols = Math.ceil(w / 15);
     const ypos = Array(cols).fill(0);
 
     let time = 0;
-    ctx.font = '11px monospace';
+    ctx.font = '14px monospace';
 
     function matrix(now) {
       requestAnimationFrame(matrix);
@@ -31,7 +31,7 @@ mdlr('canvas:matrix', m => {
 
       ypos.forEach((y, ind) => {
         const text = String.fromCharCode(0x3080 + Math.random() * 96);
-        const x = ind * 12;
+        const x = ind * 15;
         ctx.fillText(text, x, y);
         if (y > 100 + Math.random() * h / 15 * cols) ypos[ind] = 0;
         else ypos[ind] = y + 15;
@@ -40,4 +40,9 @@ mdlr('canvas:matrix', m => {
 
     matrix(0);
   })
+
+  window.addEventListener('resize', () => {
+    location.reload();
+  });
+
 })

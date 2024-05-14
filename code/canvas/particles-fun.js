@@ -16,7 +16,7 @@ mdlr('[web]canvas:particles-fun', m => {
     return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
   }
 
-  m.html`<canvas{} height={} width={} />`;
+  m.html`<canvas{} height={} width={}/>`;
 
   m.style`
   display: block;

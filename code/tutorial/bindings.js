@@ -27,24 +27,27 @@ mdlr('[web]tutorial:numeric-input', m => {
 
   m.html`
     <label>
-      <input type="number" value={a} on{change=changeA} min="0" max="10" />
-      <input type="range" value={a} on{change=changeA} min="0" max="10" />
+      <input type="number" data-key="a" value={a} on{input} min="0" max="10"/>
+      <input type="range" data-key="a" value={a} on{input} min="0" max="10"/>
     </label>
-    <br/>
     <label>
-      <input type="number" value={b} on{change=changeB} min="0" max="10" />
-      <input type="range" value={b} on{change=changeB} min="0" max="10" />
+      <input type="number" data-key="b" value={b} on{input} min="0" max="10"/>
+      <input type="range" data-key="b" value={b} on{input} min="0" max="10"/>
     </label>
-    <br/>
-    <p>{a} + {b} = {a + b}</p>`;
+    <p>{a} + {b} = {a+b}</p>`;
 
   m.style`
     display: inline-block;
     background-color: #111;
     color: #ccc;
     padding: 0.5em;
-  
-    p {
+
+    > label {
+      display: flex;
+      align-items: center;
+    }
+
+    > p {
       margin: 0.5em 0 0 0;
     }`;
 
@@ -52,12 +55,9 @@ mdlr('[web]tutorial:numeric-input', m => {
     a = 4;
     b = 2;
 
-    changeA({ target }) {
-      this.a = +target.value;
-    }
-
-    changeB({ target }) {
-      this.b = +target.value;
+    input({ target }) {
+      const { key } = target.dataset;
+      this[key] = +target.value;
     }
   }
 
