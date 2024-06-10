@@ -37,7 +37,7 @@ mdlr('[web]demo:modplayer-analyser', m => {
       const dataArray = this.#dataArray;
       const sliceWidth = WIDTH / WIDTH;
 
-      if (!analyser) return;
+      if (!analyser || !context) return;
 
       analyser.getFloatTimeDomainData(dataArray);
 

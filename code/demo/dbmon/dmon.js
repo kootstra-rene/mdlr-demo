@@ -1,12 +1,12 @@
 mdlr('[web]demo:db-mon:data-base-overview', m => {
 
   m.html`{:self autohide}
-  <td class="dbname">{dbname}</td>
-  <td class="query-count">
+  <td>{dbname}</td>
+  <td>
     <span class="{lastSample.countClassName}">{lastSample.nbQueries}</span>
   </td>
   {#each q in lastSample.topFiveQueries}
-    <td class="{q.elapsedClassName}">
+    <td class="{q.elapsedClassName||false}">
       {q.formatElapsed || ''}
       <div class="popover">
         <div class="popover-content">{q.query || ''}</div>
@@ -90,7 +90,7 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
             border-left-color: rgba(0,0,0,.25);
             margin-top: -11px;
             right: -11px;
-            top:50%;
+            top: 50%;
 
             &:after {
               border-width: 10px;

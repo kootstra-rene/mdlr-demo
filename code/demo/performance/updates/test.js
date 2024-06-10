@@ -5,7 +5,7 @@ mdlr('[web]demo:performance:updates-app', m => {
   m.html`
     {#each c in blocks}
       {#each v in collection}
-        <div id="root" mdlr="{m.name}-{c}.{v}">some: {info} :data ({frame})<span> -- {c*v}</span></div>
+        <div on{click} id="root" mdlr="{m.name}-{c}.{v}">some: {info} :data ({frame})<span> -- {c*v}</span></div>
       {:else}
       ...
       {/each}

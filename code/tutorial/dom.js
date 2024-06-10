@@ -1,6 +1,6 @@
 mdlr('[web]tutorial:dom-elementsize', m => {
 
-  m.html`{:self{root}}{root.offsetWidth}x{root.offsetHeight}`;
+  m.html`{:self{root}}{root.offsetWidth}x{root.offsetHeight} ({root.offsetWidth*devicePixelRatio}x{root.offsetHeight*devicePixelRatio})`;
 
   m.style`
   display: flex;

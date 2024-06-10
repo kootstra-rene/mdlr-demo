@@ -63,11 +63,11 @@ mdlr('[web]demo:realworld-app', m => {
     }
 
     connected() {
-      this.#router.connect(window.location.href)
+      this.#router.attach(window.location.href)
     }
 
     disconnected() {
-      this.#router.disconnect();
+      this.#router.detach();
     }
 
     async #update({ path, search = {} }) {
