@@ -15,23 +15,18 @@ mdlr('[web]demo:realworld-article', m => {
 
     <div class="container page">
       {#if article}
-      <div class="row article-content">
-        <div class="col-md-12">
-          <p>{article.body}</p>
-          <realworld-tags tags={article.tagList}/>
+        <div class="row article-content">
+          <div class="col-md-12">
+            <p>{article.body}</p>
+            <realworld-tags{=} tags={article.tagList}/>
+          </div>
         </div>
-      </div>
+        <hr />
+        <div class="row">
+          <realworld-article-comments{=}/>
+        </div>
       {:else}
-      <div>loading article...</div>
-      {/if}
-      <hr />
-      {#if article}
-      <div class="article-actions">
-        <realworld-article-meta{=}/>
-      </div>
-      <div class="row">
-        <realworld-article-comments{=}/>
-      </div>
+        <div>loading article...</div>
       {/if}
     </div>
   </div>`;
@@ -45,6 +40,7 @@ mdlr('[web]demo:realworld-article', m => {
     api;
     user;
     search;
+    actions;
 
     article;
     details = true;
@@ -52,6 +48,9 @@ mdlr('[web]demo:realworld-article', m => {
     async connected() {
       this.article = await this.api.getArticle(this.user, this.search);
     }
+
+    select;
+
   }
 
 })

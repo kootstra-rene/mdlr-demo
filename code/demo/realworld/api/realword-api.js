@@ -34,10 +34,20 @@ mdlr('demo:realworld-api', m => {
       return result;
     },
 
+    getFeed: async (user, options={}) => {
+      let queryString = `limit=10&offset=0`;
+      const result = await fetch(`${origin}/articles/feed?${queryString}`, {
+        headers: buildHeaders(user)
+      }).then(r => r.json());
+
+      return result.articles;
+    },
+
     getArticles: async (user, options) => {
       let queryString = `limit=10&offset=0`;
       if (options.tag) queryString = `tag=${options.tag}&${queryString}`;
       if (options.username) queryString = `author=${options.username}&${queryString}`;
+      if (options.favorited) queryString = `favorited=${options.favorited}&${queryString}`;
       const result = await fetch(`${origin}/articles?${queryString}`, {
         headers: buildHeaders(user)
       }).then(r => r.json());
@@ -97,6 +107,52 @@ mdlr('demo:realworld-api', m => {
       return result;
     },
 
+    follow: async (user, options) => {
+      const result = await fetch(`${origin}/profiles/${options.username}/follow`, {
+        method: 'post',
+        headers: buildHeaders(user)
+      }).then(r => r.json());
+
+      return result.profile;
+    },
+
+    unfollow: async (user, options) => {
+      const result = await fetch(`${origin}/profiles/${options.username}/follow`, {
+        method: 'delete',
+        headers: buildHeaders(user)
+      }).then(r => r.json());
+
+      return result.profile;
+    },
+
+    createArticle: async (user, options) => {
+      const result = await fetch(`${origin}/articles`, {
+        method: 'post',
+        headers: buildHeaders(user),
+        body: JSON.stringify(options)
+      }).then(r => r.json());
+
+      return result.article;
+    },
+
+    updateArticle: async (user, options) => {
+      const result = await fetch(`${origin}/articles/${options.article.slug}`, {
+        method: 'put',
+        headers: buildHeaders(user),
+        body: JSON.stringify(options)
+      }).then(r => r.json());
+
+      return result.article;
+    },
+    deleteArticle: async (user, options) => {
+      const result = await fetch(`${origin}/articles/${options.article.slug}`, {
+        method: 'delete',
+        headers: buildHeaders(user),
+        body: JSON.stringify(options)
+      }).then(r => r.json());
+
+      return result.article;
+    }
   };
 
 })

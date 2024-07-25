@@ -17,5 +17,7 @@ mdlr('[web]demo:realworld-main-tags', m => {
     async connected() {
       this.tags = await this.api.getTags(this.user);
     }
+
+    select;
   }
 })

@@ -55,7 +55,7 @@ mdlr('[web]demo:realworld-settings', m => {
     logout() {
       localStorage.setItem('user', '{}');
 
-      m.redirect('#/');
+      location.replace('#/');
     }
 
     async update() {
@@ -76,7 +76,7 @@ mdlr('[web]demo:realworld-settings', m => {
       Object.assign(this.user, result.user);
       localStorage.setItem('user', JSON.stringify(result));
 
-      m.redirect('#/');
+      location.replace('#/');
     }
   }
 })

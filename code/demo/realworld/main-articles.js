@@ -12,7 +12,7 @@ mdlr('[web]demo:realworld-main-articles', m => {
       <h1>{article.title}</h1>
       <p>{article.description}</p>
       <span>Read more...</span>
-      <realworld-tags tags={article.tagList}/>
+      <realworld-tags{=} tags={article.tagList}/>
     </a>
     </div>
   {:else}
@@ -27,7 +27,11 @@ mdlr('[web]demo:realworld-main-articles', m => {
     api;
     user;
     search;
+    actions;
+    
     articles;
+
+    select;
   }
 
 })

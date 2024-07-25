@@ -94,7 +94,8 @@ mdlr('[web]demo:realworld-login', m => {
       }
       else {
         localStorage.setItem('user', JSON.stringify(result)); // Q: whos responsibility is this?
-        m.redirect('#/');
+
+        location.replace('#/');
       }
     }
 

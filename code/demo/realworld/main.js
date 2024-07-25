@@ -22,11 +22,11 @@ mdlr('[web]demo:realworld-main', m => {
           <div class="feed-toggle">
             <ul class="nav nav-pills outline-active">
               {#if !!user}
-              <li class="nav-item"><a class="nav-link {userFeed()}" href="#/?username={user.username}">Your Feed</a></li>
+              <li class="nav-item"><a class="nav-link {active('')}" href="#/?tab">Your Feed</a></li>
               {/if}
-              <li class="nav-item"><a class="nav-link {globalFeed()}" href="#/">Global Feed</a></li>
+              <li class="nav-item"><a class="nav-link {active('global')}" href="#/?tab=global">Global Feed</a></li>
               {#if !!search.tag}
-              <li class="nav-item"><a class="nav-link {tagFeed()}" href="#/?tag={search.tag}"># {search.tag}</a></li>
+              <li class="nav-item"><a class="nav-link {active('tag')}" on{click=()=>select(search.tag)}># {search.tag}</a></li>
               {/if}
             </ul>
           </div>
@@ -49,17 +49,10 @@ mdlr('[web]demo:realworld-main', m => {
     search;
     articles;
 
-    // todo: there should be an easier method to this
-    userFeed() {
-      return this.search.username ? 'active' : 'disabled';
-    }
+    select;
 
-    globalFeed() {
-      return !this.search.username && !this.search.tag ? 'active' : 'disabled';
-    }
-
-    tagFeed() {
-      return this.search.tag ? 'active' : 'disabled';
+    active(mode) {
+      return this.search.tab === mode ? 'active' : '';
     }
   }
 })
