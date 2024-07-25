@@ -72,7 +72,7 @@ mdlr('demo:db-mon:environment', m => {
     }
     else {
       return {
-        query: "***",
+        query: "",
         formatElapsed: "",
         elapsedClassName: "",
         elapsed: null,

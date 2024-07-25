@@ -119,10 +119,6 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
   return class {
     dbname;
     lastSample = {};
-
-    // beforeRender() {
-    //   return 1000/24;
-    // }
   }
 
 })
