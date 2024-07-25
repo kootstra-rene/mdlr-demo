@@ -276,7 +276,7 @@ mdlr('[web]demo:modplayer-app', m => {
       const type = text(view, 1080, 4);
 
       const known_type =  mod_type.get(type);
-      console.log(`*** ${name} (${type}) ***`);
+      // console.log(`*** ${name} (${type}) ***`);
 
       const max_samples = known_type ? 31 : 15;
       const pattern_base = known_type ? 950 : 470;
@@ -288,7 +288,7 @@ mdlr('[web]demo:modplayer-app', m => {
       const num_channels = mod_type.get(type)?.num_channels ?? 4;
       const pattern_size = num_channels << 8;
 
-      console.log(num_channels, pattern_size, max_samples);
+      // console.log(num_channels, pattern_size, max_samples);
       const pattern_table = new Uint8Array(array_buffer, pattern_base + 2, song_length);
       const max_pattern = Math.max(...pattern_table);
       const positions = this.positions = [...pattern_table];
@@ -307,7 +307,7 @@ mdlr('[web]demo:modplayer-app', m => {
         const size = (samplesStart + length > array_buffer.byteLength) ? array_buffer.byteLength - samplesStart : length;
         const audio = new Int8Array(array_buffer, samplesStart, size);
         samplesStart += size;
-        console.log(`- ${name}: ${size} (${repeatOffset}..${repeatOffset + repeatLength}) <<${finetune}>>`);
+        // console.log(`- ${name}: ${size} (${repeatOffset}..${repeatOffset + repeatLength}) <<${finetune}>>`);
 
         samples.push([
           name,
