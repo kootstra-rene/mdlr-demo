@@ -32,14 +32,14 @@ mdlr('[web]tutorial:firewatch-app', m => {
     position: relative;
 
     > div {
-      position: relative;
+      position: absolute;
       text-align: center;
       height: 100%;
       width: 100%;
       background-color: rgb(32,0,1);
       color: white;
       padding: 5rem;
-      top: -1vh;
+      top: 712px;
     }
   }
 
