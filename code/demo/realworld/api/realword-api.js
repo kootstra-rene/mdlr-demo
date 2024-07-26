@@ -81,6 +81,25 @@ mdlr('demo:realworld-api', m => {
       return result.comments;
     },
 
+    postArticleComments: async (user, options) => {
+      const result = await fetch(`${origin}/articles/${options.slug}/comments`, {
+        method: 'post',
+        headers: buildHeaders(user),
+        body: JSON.stringify(options)
+      }).then(r => r.json());
+
+      return result.comment;
+    },
+
+    deleteArticleComment: async (user, options) => {
+      const result = await fetch(`${origin}/articles/${options.slug}/comments/${options.id}`, {
+        method: 'delete',
+        headers: buildHeaders(user),
+      }).then(r => r.json());
+
+      return result.comment;
+    },
+
     getTags: async (user, options) => {
       const result = await fetch(`${origin}/tags`, {
         headers: buildHeaders(user)
@@ -148,7 +167,6 @@ mdlr('demo:realworld-api', m => {
       const result = await fetch(`${origin}/articles/${options.article.slug}`, {
         method: 'delete',
         headers: buildHeaders(user),
-        body: JSON.stringify(options)
       }).then(r => r.json());
 
       return result.article;

@@ -39,14 +39,12 @@ mdlr('[web]demo:realworld-article-create', m => {
     }
 
     input(field, {target}) {
-      this.#article[field] = target.value;
+      this.#article[field] = field === 'tagList' ? target.value.split(',') : target.value;
     }
 
     async click() {
-      console.log(this.#article);
       this.#article.tagList = this.#article.tagList.map(a => a.trim()).filter(a => a);
       const result = !this.search?.slug ? await this.actions.createArticle(this.#article) : await this.actions.updateArticle(this.#article);
-      console.log(result);
       location.replace(`#/editor?slug=${result.slug}`);
     }
 

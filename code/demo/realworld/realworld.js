@@ -43,6 +43,7 @@ mdlr('[web]demo:realworld-app', m => {
   m.global`
     a:hover { cursor: pointer }
     i[class] { padding-right: 4px }
+    img.comment-author-img { margin-right: 4px }
   `;
 
   document.head.innerHTML += `
@@ -89,6 +90,12 @@ mdlr('[web]demo:realworld-app', m => {
         deleteArticle: async article => {
           return this.api.deleteArticle(this.user, {article});
         },
+        deleteComment: async options => {
+          return this.api.deleteArticleComment(this.user, options);
+        },
+        postComment: async options => {
+          return this.api.postArticleComments(this.user, options);
+        },
       }
     }
 
@@ -118,21 +125,25 @@ mdlr('[web]demo:realworld-app', m => {
           case 'global':
             this.articles = await this.api.getArticles(user, {});
             break;
+
           case 'tag':
             this.articles = await this.api.getArticles(user, search);
             break;
+
           default:
             this.articles = await this.api.getFeed(user);
             break;
         }
       }
-
+      else
       if (path === '/profile') {
         const {tab = ''} = search;
         
-        this.articles = [];
-        this.profile = await this.api.getProfile(user, search);
-        this.articles = await this.api.getArticles(user, tab === 'favorited' ? {favorited:username} : {username});
+        const articles = await this.api.getArticles(user, tab === 'favorited' ? {favorited:username} : {username});
+        const profile = await this.api.getProfile(user, search);
+
+        this.articles = articles;
+        this.profile = profile;
       }
 
       // finally set the path to trigger update
