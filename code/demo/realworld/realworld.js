@@ -50,9 +50,14 @@ mdlr('[web]demo:realworld-app', m => {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Conduit</title>
-  <link href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css">
-  <link prefetch href="//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic" rel="stylesheet" type="text/css">
-  <link prefetch rel="stylesheet" href="//demo.productionready.io/main.css">`;
+  <link preconnect prefetch href="//code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css">
+  <link preconnect prefetch href="//fonts.googleapis.com/css?family=Titillium+Web:700|Source+Serif+Pro:400,700|Merriweather+Sans:400,700|Source+Sans+Pro:400,300,600,700,300italic,400italic,600italic,700italic" rel="stylesheet" type="text/css">
+  <link preconnect prefetch rel="stylesheet" href="//demo.productionready.io/main.css">`;
+
+  const pages = articles => {
+    const count = Math.ceil(articles.count / 10);
+    return new Array(count).fill(1).map((a, i) => i + 1);
+  }
 
   return class {
     #router = new Router('client');
@@ -64,6 +69,7 @@ mdlr('[web]demo:realworld-app', m => {
     actions;
     profile;
     articles;
+    pages;
 
     construct() {
       const update = this.#update.bind(this);
@@ -79,16 +85,16 @@ mdlr('[web]demo:realworld-app', m => {
           return this.api.unfollow(this.user, author);
         },
         getArticle: async slug => {
-          return await this.api.getArticle(this.user, {slug});
+          return await this.api.getArticle(this.user, { slug });
         },
         createArticle: async article => {
-          return this.api.createArticle(this.user, {article});
+          return this.api.createArticle(this.user, { article });
         },
         updateArticle: async article => {
-          return this.api.updateArticle(this.user, {article});
+          return this.api.updateArticle(this.user, { article });
         },
         deleteArticle: async article => {
-          return this.api.deleteArticle(this.user, {article});
+          return this.api.deleteArticle(this.user, { article });
         },
         deleteComment: async options => {
           return this.api.deleteArticleComment(this.user, options);
@@ -119,32 +125,36 @@ mdlr('[web]demo:realworld-app', m => {
       this.user = user;
 
       const username = search.username ?? user?.username ?? '';
+      const offset = (search.page - 1) * 10;
 
       if (path === '/') {
         switch (this.search.tab) {
+          default:
           case 'global':
-            this.articles = await this.api.getArticles(user, {});
+            this.articles = await this.api.getArticles(user, { offset });
             break;
 
           case 'tag':
-            this.articles = await this.api.getArticles(user, search);
+            this.articles = await this.api.getArticles(user, { ...search, offset });
             break;
 
-          default:
-            this.articles = await this.api.getFeed(user);
+          case 'your':
+            this.articles = await this.api.getFeed(user, { offset });
             break;
         }
+        this.pages = [...pages(this.articles)];
       }
-      else
-      if (path === '/profile') {
-        const {tab = ''} = search;
-        
-        const articles = await this.api.getArticles(user, tab === 'favorited' ? {favorited:username} : {username});
+      else if (path === '/profile') {
+        const { tab = '' } = search;
+
+        const articles = await this.api.getArticles(user, tab === 'favorited' ? { favorited: username } : { username });
         const profile = await this.api.getProfile(user, search);
 
         this.articles = articles;
         this.profile = profile;
+        this.pages = [...pages(this.articles)];
       }
+
 
       // finally set the path to trigger update
       this.path = path;

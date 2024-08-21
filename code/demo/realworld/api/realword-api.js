@@ -40,11 +40,12 @@ mdlr('demo:realworld-api', m => {
         headers: buildHeaders(user)
       }).then(r => r.json());
 
+      result.articles.count = result.articlesCount;
       return result.articles;
     },
 
     getArticles: async (user, options) => {
-      let queryString = `limit=10&offset=0`;
+      let queryString = `limit=10&offset=${options.offset||0}`;
       if (options.tag) queryString = `tag=${options.tag}&${queryString}`;
       if (options.username) queryString = `author=${options.username}&${queryString}`;
       if (options.favorited) queryString = `favorited=${options.favorited}&${queryString}`;
@@ -52,6 +53,7 @@ mdlr('demo:realworld-api', m => {
         headers: buildHeaders(user)
       }).then(r => r.json());
 
+      result.articles.count = result.articlesCount;
       return result.articles;
     },
 

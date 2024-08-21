@@ -60,7 +60,7 @@ mdlr('[web]demo:realworld-article-meta', m => {
     }
 
     formatDate() {
-      return dateFormatter.format(new Date(this.article?.updatedAt || '1970-01-01'));
+      return dateFormatter.format(new Date(this.article?.updatedAt || this.article?.createdAt || '1970-01-01'));
     }
 
     async favoriteClick(e) {

@@ -1,15 +1,16 @@
 mdlr('[web]demo:db-mon:data-base-overview', m => {
 
-  m.html`{:self autohide}
+  m.html`
+  {:self autohide}
   <td>{dbname}</td>
   <td>
     <span class="{lastSample.countClassName}">{lastSample.nbQueries}</span>
   </td>
   {#each q in lastSample.topFiveQueries}
     <td class="{q.elapsedClassName||false}">
-      {q.formatElapsed || ''}
+      {q.formatElapsed||''}
       <div class="popover">
-        <div class="popover-content">{q.query || ''}</div>
+        <div class="popover-content">{q.query||''}</div>
         <div class="arrow"/>
       </div>
     </td>

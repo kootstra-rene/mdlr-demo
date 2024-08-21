@@ -21,17 +21,26 @@ mdlr('[web]demo:realworld-main', m => {
         <div class="col-md-9">
           <div class="feed-toggle">
             <ul class="nav nav-pills outline-active">
+              <li class="nav-item"><a class="nav-link {active('')}" href="#/?tab=global">Global Feed</a></li>
               {#if !!user}
-              <li class="nav-item"><a class="nav-link {active('')}" href="#/?tab">Your Feed</a></li>
+                <li class="nav-item"><a class="nav-link {active('your')}" href="#/?tab=your">Your Feed</a></li>
               {/if}
-              <li class="nav-item"><a class="nav-link {active('global')}" href="#/?tab=global">Global Feed</a></li>
               {#if !!search.tag}
-              <li class="nav-item"><a class="nav-link {active('tag')}" on{click=()=>select(search.tag)}># {search.tag}</a></li>
+                <li class="nav-item"><a class="nav-link {active('tag')}" on{click=()=>select(search.tag)}># {search.tag}</a></li>
               {/if}
             </ul>
           </div>
 
           <realworld-main-articles{=}/>
+          <nav>
+            <ul class="pagination">
+            {#each page in pages}
+              <li class="page-item {(+search.page || 1) === page ? 'active' : ''}">
+                <button class="page-link" on{click}>{page}</button>
+              </li>
+            {/each}
+            </ul>
+          </nav>
         </div>
 
         <div class="col-md-3">
@@ -48,11 +57,18 @@ mdlr('[web]demo:realworld-main', m => {
     user;
     search;
     articles;
+    pages;
 
     select;
 
     active(mode) {
-      return this.search.tab === mode ? 'active' : '';
+      return mode === (this.search.tab ?? '') ? 'active' : '';
+    }
+
+    click(e) {
+      const {tab,tag} = this.search;
+      const page = e.target.textContent;
+      location.replace(`#/?tab=${tab||''}${tag?`&tag=${tag}`:''}&page=${page}`);
     }
   }
 })

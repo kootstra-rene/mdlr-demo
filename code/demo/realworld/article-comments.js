@@ -30,7 +30,7 @@ mdlr('[web]demo:realworld-article-comments', m => {
         <span class="date-posted">{formatDate(comment)}</span>
         {#if comment.author.username === user.username}
           <button style="float:right" class="btn btn-outline-danger btn-sm" on{click=()=>deleteComment(comment)}>
-            <i class="ion-trash-a"/>delete
+            <i class="ion-trash-a"/>Delete
           </button>
         {/if}
       </div>
@@ -49,7 +49,7 @@ mdlr('[web]demo:realworld-article-comments', m => {
     comments;
 
     async connected() {
-      this.comments = await this.api.getArticleComments(this.user, this.search);
+      this.comments = (await this.api.getArticleComments(this.user, this.search)).sort((a,b) => b.updatedAt.localeCompare(a.updatedAt));
     }
 
     formatDate(comment) {
@@ -61,7 +61,6 @@ mdlr('[web]demo:realworld-article-comments', m => {
         slug: this.search.slug,
         id: comment.id,
       });
-      console.log('deleting:', comment);
 
       this.comments = await this.api.getArticleComments(this.user, this.search);
       this.text.value = '';
