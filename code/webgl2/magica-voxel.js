@@ -12,13 +12,12 @@ mdlr('[web]webgl-magica-voxel', m => {
       precision highp int;
       
       layout(location=0) in vec3 base;
-      layout(location=1) in vec3 norm;
+      layout(location=1) in vec3 normal;
       layout(location=2) in ivec3 bits;
 
       flat out ivec2 atlas_image_base;
-      out vec4 frag_pos;
-      out vec4 ambient;
-      out vec4 normal;
+      out float brightness;
+      flat out vec4 ambient;
 
       uniform vec3 center;
 
@@ -27,10 +26,12 @@ mdlr('[web]webgl-magica-voxel', m => {
       uniform mat4 camera_matrix;
       uniform mat4 projection_matrix;
       uniform vec4 ambient_light;
+      uniform vec4 diffuse_light;
 
       void main() {
-        normal = vec4(norm, 1.0);
         ambient = vec4(ambient_light.rgb * ambient_light.a, 1.0);
+        brightness = max(dot(normalize(diffuse_light.xyz), normalize(mat3(model_matrix) * normal)), 0.0);
+        brightness *= diffuse_light.a;
 
         float x = float((bits.x >> 0u) & 31);
         float y = float((bits.x >> 5u) & 31);
@@ -60,7 +61,6 @@ mdlr('[web]webgl-magica-voxel', m => {
         pos += ((offset.xyz * (255.0 + 0.0) - center));
 
         gl_Position = projection_matrix * camera_matrix * model_matrix * vec4(pos, 1.0);
-        frag_pos = model_matrix * vec4(pos, 1.0);
       }`,
 
     fragment: `#version 300 es
@@ -70,25 +70,17 @@ mdlr('[web]webgl-magica-voxel', m => {
       precision highp int;
 
       uniform highp sampler2D sampler;
-      uniform vec4 diffuse_light;
-      uniform vec4 ambient_light;
 
       flat in ivec2 atlas_image_base;
-      in vec4 ambient;
-      in vec4 normal;
-      in vec4 frag_pos;
+      flat in vec4 ambient;
+      in float brightness;
 
       out vec4 frag_color;
 
       void main() {
-        vec4 norm = normalize(normal);
-        vec4 lightDir = normalize(diffuse_light - frag_pos);
-        float diff = max(dot(norm, lightDir), 0.0);
-        vec4 diffuse = diff * ambient_light;
-
         vec4 texel = texelFetch(sampler, atlas_image_base, 0);
-        frag_color = (ambient + diffuse) * texel;
-        // frag_color.a = 1.0;
+        frag_color = texel * (ambient + brightness);
+        frag_color.a = 1.0;
       }`
   }
 
@@ -316,7 +308,7 @@ mdlr('[web]webgl-magica-voxel', m => {
       // const res = await fetch('/docs/res/monu1.vox');
       // const res = await fetch('/docs/res/monu7.vox');
       // const res = await fetch('/docs/res/monu8.vox');
-      const res = await fetch('/docs/res/monu16.vox');
+      // const res = await fetch('/docs/res/monu16.vox');
       // const res = await fetch('/docs/res/haunted_house.vox');
       // const res = await fetch('/docs/res/treehouse.vox');
       // const res = await fetch('/docs/res/phantom_mansion.vox');
@@ -324,13 +316,30 @@ mdlr('[web]webgl-magica-voxel', m => {
       // const res = await fetch('/docs/res/skyscraper_04_000.vox');
       // const res = await fetch('/docs/res/skyscraper_06_000.vox');
       // const res = await fetch('/docs/res/pieta.vox');
-      // const res = await fetch('/docs/res/realistic_terrain.vox'); 
+      // const res = await fetch('/docs/res/realistic_terrain.vox');
       // const res = await fetch('/docs/res/nature.vox');
       // const res = await fetch('/docs/res/rocky-mossy-stairs.vox');
       // const res = await fetch('/docs/res/odyssey_scene.vox');
-      // const res = await fetch('/docs/res/red_booth_solid.vox');
+      const res = await fetch('/docs/res/red_booth_solid.vox');
       // const res = await fetch('/docs/res/street_scene.vox');
-      // const res = await fetch('/docs/res/TallBuilding03.vox');
+      // const res = await fetch('/docs/res/zombie.vox');
+      // const res = await fetch('/docs/res/tank.vox');
+
+      // const res = await fetch('/docs/res/desert-town/LargeBuilding01.vox');
+      // const res = await fetch('/docs/res/desert-town/TallBuilding01.vox');
+      // const res = await fetch('/docs/res/desert-town/TallBuilding02.vox');
+      // const res = await fetch('/docs/res/desert-town/TallBuilding03.vox');
+      // const res = await fetch('/docs/res/desert-town/SmallBuilding01.vox');
+      // const res = await fetch('/docs/res/desert-town/SmallBuilding02.vox');
+      // const res = await fetch('/docs/res/desert-town/SmallBuilding03.vox');
+      // const res = await fetch('/docs/res/desert-town/SmallBuilding04.vox');
+      // const res = await fetch('/docs/res/desert-town/TinyBuilding01.vox');
+
+      // const res = await fetch('/docs/res/huge/custom.vox');
+      // const res = await fetch('/docs/res/huge/sponza.vox');
+      // const res = await fetch('/docs/res/huge/Church_Of_St_Sophia.vox');
+      // const res = await fetch('/docs/res/huge/castle.vox');
+      // const res = await fetch('/docs/res/huge/nuke.vox');
 
       const data = await res.arrayBuffer();
       let state = vox_loader(data);
@@ -448,8 +457,8 @@ mdlr('[web]webgl-magica-voxel', m => {
       // setup uniforms
       gl.uniform3fv(center_loc, [CX, CY, CZ]);
       gl.uniformMatrix4fv(projection_matrix_loc, false, projection);
-      gl.uniform4fv(ambient_loc, [1.0, 1.0, 1.0, 0.2]);
-      gl.uniform4fv(diffuse_loc, [0, CY * 2, 0, 1.0]);
+      gl.uniform4fv(ambient_loc, [1.0, 1.0, 1.0, 0.3]);
+      gl.uniform4fv(diffuse_loc, [CX, CY * 5, -MX, 0.7]);
 
       this.drawScene = (now) => {
         // rotate camera
@@ -458,7 +467,7 @@ mdlr('[web]webgl-magica-voxel', m => {
         // const inverse_camera = get_inverse_camera(camera_matrix);
 
         // rotate model
-        mat4.rotate(model_matrix, model_matrix, -0.0025, [0, 1, 0]);
+        mat4.rotate(model_matrix, mat4.create(), -0.00025 * now, [0, 1, 0]);
         gl.uniformMatrix4fv(model_matrix_loc, false, model_matrix);
 
         let total_faces = 0;
@@ -473,10 +482,9 @@ mdlr('[web]webgl-magica-voxel', m => {
           // gl.drawArraysInstanced(gl.LINE_STRIP, 0, 4, instance_count);
           gl.bindVertexArray(null);
         }
-        // console.log('#triangles:', 2 * total_faces);
+
         this.drawn_triangles = total_faces * 2;
         this.model_triangles = state.total_voxels * 6 * 2;
-
       }
     }
 
@@ -504,7 +512,7 @@ mdlr('[web]webgl-magica-voxel', m => {
         models: [{ modelId: 0 }]
       };
 
-      // console.log('  '.repeat(depth) + node.kind);
+      console.log('  '.repeat(depth) + node.kind);
 
       switch (node.kind) {
         case 'nTRN': {
@@ -518,6 +526,7 @@ mdlr('[web]webgl-magica-voxel', m => {
           scene.translate.x -= x;
           scene.translate.y -= y;
           scene.translate.z -= z;
+          // scene.translate = {x:0,y:0,z:0};
         } break;
 
         case 'nGRP': {
@@ -559,19 +568,25 @@ mdlr('[web]webgl-magica-voxel', m => {
     }
 
     makeSceneXYZ(scene) {
-      const { minY, maxY, minZ, maxZ } = scene;
+      const { minX, maxX, minY, maxY, minZ, maxZ } = scene;
 
-      scene.minY = minZ;
-      scene.maxY = maxZ;
-      scene.minZ = minY;
-      scene.maxZ = maxY;
+      scene.minX = 0;
+      scene.maxX = maxX - minX;
+      scene.minY = 0;
+      scene.maxY = maxZ - minZ;
+      scene.minZ = 0;
+      scene.maxZ = maxY - minY;
 
       scene.voxels.forEach(voxel => {
+        voxel.x -= minX ?? 0;
+        voxel.y -= minY ?? 0;
+        voxel.z -= minZ ?? 0;
+
         const { x, y, z } = voxel;
 
-        voxel.id = makeVoxelId(x, z, y);
+        voxel.id = makeVoxelId(x, z, scene.maxZ - y);
         voxel.y = z;
-        voxel.z = y;
+        voxel.z = scene.maxZ - y;
       });
     }
 
@@ -625,9 +640,6 @@ mdlr('[web]webgl-magica-voxel', m => {
 
     buildModelChunks(scene) {
       return scene.voxels.reduce((chunks, voxel) => {
-        voxel.x -= scene.minX ?? 0;
-        voxel.y -= scene.minY ?? 0;
-        voxel.z -= scene.minZ ?? 0;
         const chunkId = (voxel.x >>> 5) + (voxel.y >>> 5) * 256 + (voxel.z >>> 5) * 256 * 256;
         let chunk = chunks.get(chunkId);
         if (!chunk) {
@@ -650,7 +662,7 @@ mdlr('[web]webgl-magica-voxel', m => {
         }
         if (k === '_r') {
           this.decodeRotationMatrix(m, +v);
-          // console.log('matrix:', v, m);
+          console.log('matrix:', v, m);
         }
       });
 

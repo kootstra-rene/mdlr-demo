@@ -1,7 +1,5 @@
 mdlr('demo:modplayer:worklet:channel', m => {
 
-  const [notes, samples] = m.require(':inject');
-
   let sampleRate;
 
   let outputBuffer;
@@ -17,7 +15,6 @@ mdlr('demo:modplayer:worklet:channel', m => {
   let interpolationFactor;
   let index;
 
-  let $prevperiod;
   let $period;
   let $effect;
 
@@ -37,9 +34,12 @@ mdlr('demo:modplayer:worklet:channel', m => {
   let tremoloSpeed;
   let effectIndex;
 
-  const calculate_index_step = (delta = 0) => {
-    const tunedPeriod = (0.5 + $period * (2 ** (-finetune / 12 / 8))) >>> 0;
-    indexStep = 7093789.2 / ((tunedPeriod + delta) * 2 * sampleRate / arpeggio);
+  const [notes, samples] = m.require('channel');
+
+  const calculate_index_step = (delta = 0.0) => {
+    const tunedPeriod = (0.5 + $period * (2.0 ** (-finetune / 12 / 8))) >>> 0;
+    // indexStep = 7093789.2 / ((tunedPeriod + delta) * 2.0 * sampleRate / arpeggio); // PAL
+    indexStep = 7159090.5 / ((tunedPeriod + delta) * 2.0 * sampleRate / arpeggio); // NTSC
   }
 
   const clip_volume = () => {
@@ -69,7 +69,6 @@ mdlr('demo:modplayer:worklet:channel', m => {
         vibratoDepth =
         vibratoSpeed =
         effectIndex =
-        $prevperiod =
         $period = 0;
 
       arpeggio = +1;
@@ -89,18 +88,21 @@ mdlr('demo:modplayer:worklet:channel', m => {
       const period = ((note >>> 16) & 0xfff);
       const sampleId = (((note >>> 24) & 0xf0) | ((note >>> 12) & 0x0f));
 
-      const instrument = samples[sampleId];
-
-      if (instrument) {
-        ([, audio, size, volume, repeatBegin, repeatEnd, finetune] = instrument);
+      if (sampleId) {
+        ([, audio, size, volume, repeatBegin, repeatEnd, finetune] = samples[sampleId]);
         repeat = size && repeatEnd > repeatBegin + 2;
       }
 
       if (period) {
         tremolo = 0;
-        $prevperiod = $period;
-        $period = period;
-        index = effectIndex = 0;
+        if ((effect >>> 8) === 3 || (effect >>> 8) === 5) { // todo: preferably not here
+          portamentoSlideTo = period;
+        }
+        else {
+          // interpolationFactor = 0.0;
+          index = effectIndex = 0;
+          $period = period;
+        }
         delay = 0;
 
         calculate_index_step();
@@ -119,21 +121,23 @@ mdlr('demo:modplayer:worklet:channel', m => {
     },
 
     advance() {
+      ++outputIndex;
       if (audio && index < size && !delay) {
         let sample = audio[(index >>> 0)];
         let interpolatedSample = lastSample + (sample - lastSample) * (interpolationFactor);
-        // interpolatedSample -= sample;
+        // interpolatedSample = sample;
 
         let $volume = volume + tremolo;
         if ($volume > 64) $volume = 64;
         if ($volume < 0) $volume = 0;
 
-        outputBuffer[++outputIndex] = interpolatedSample * ($volume / 64.0);
+        let output_sample = interpolatedSample * ($volume / 64.0);
+        outputBuffer[outputIndex] = isFinite(output_sample) ? output_sample : 0.0;
 
         if ((interpolationFactor += indexStep) >= 1.0) {
-          lastSample = sample;//interpolatedSample;
-          interpolationFactor %= 1;
-          ++index;
+          index += (interpolationFactor >>> 0)
+          interpolationFactor %= 1.0;
+          lastSample = sample;
         }
         if (repeat && index >= repeatEnd) {
           index = repeatBegin;
@@ -147,29 +151,25 @@ mdlr('demo:modplayer:worklet:channel', m => {
       calculate_index_step();
     },
     1(data, tick) { // slide up
-      if (tick && ($period -= xy(data)) < 113) $period = 113;
+      if (tick && ($period -= xy(data)) < 54) $period = 54;
       calculate_index_step();
     },
     2(data, tick) { // slide down
-      if (tick && ($period += xy(data)) > 856) $period = 856;
+      if (tick && ($period += xy(data)) > 1814) $period = 1814;
       calculate_index_step();
     },
     3(data, tick) { // tone portamento
       if (!tick && xy(data)) {
-        portamentoSlideTo = $period;
-        portamentoSpeed = ($period < $prevperiod) ? -xy(data) : xy(data);
-
-        $period = $prevperiod;
-        calculate_index_step();
+        portamentoSpeed = xy(data);
       }
       else {
-        if (portamentoSpeed < 0 && portamentoSlideTo < $period) {
-          if (($period += portamentoSpeed) < portamentoSlideTo) {
+        if (portamentoSlideTo < $period) {
+          if (($period -= portamentoSpeed) < portamentoSlideTo) {
             $period = portamentoSlideTo;
           }
           calculate_index_step();
         }
-        if (portamentoSpeed > 0 && portamentoSlideTo > $period) {
+        if (portamentoSlideTo > $period) {
           if (($period += portamentoSpeed) > portamentoSlideTo) {
             $period = portamentoSlideTo;
           }
@@ -217,11 +217,11 @@ mdlr('demo:modplayer:worklet:channel', m => {
       }
     },
     225(data, tick) { // fine slide up
-      if (!tick && ($period -= y(data)) < 113) $period = 113;
+      if (!tick && ($period -= y(data)) < 54) $period = 54;
       calculate_index_step();
     },
     226(data, tick) { // fine slide down
-      if (!tick && ($period += y(data)) > 856) $period = 856;
+      if (!tick && ($period += y(data)) > 1814) $period = 1814;
       calculate_index_step();
     },
     233(data, tick) { // retrigger note
@@ -294,8 +294,8 @@ mdlr('demo:modplayer:worklet:player', m => {
   const x = data => (data >> 4) & 15;
   const y = data => data & 15;
 
-  const missing_effect = (data, tick) => {
-    post_message(['trace', `unimplemented effect: ${data.toString(16)}`]);
+  const missing_effect = (data) => {
+    post_message(['trace', `n/a: ${data.toString(16)}`]);
   }
 
   const apply_channels = f => channels.forEach(a => f(a));
@@ -315,13 +315,13 @@ mdlr('demo:modplayer:worklet:player', m => {
       on_row();
     }
 
-    for (const channel of channels) {
+    apply_channels(channel => {
       effectId = (effect = channel.effect) >> 8;
       if (effectId === 14) { // extended effects
         effectId = effect >> 4;
       }
       (channel[effectId] ?? self[effectId] ?? missing_effect)(effect, tick);
-    }
+    })
   }
 
   const on_row = () => {
@@ -348,47 +348,44 @@ mdlr('demo:modplayer:worklet:player', m => {
     }
 
     post_message(['row', row | (positions[position] << 6), position]);
-    tick = 0;
   }
 
+  const init = (options) => {
+    ([channels, port, sampleRate]) = options;
+
+    apply_channels(channel => channel.init(sampleRate));
+    positionJump = rowJump = -1;
+    looping = false;
+  }
+
+  const play = (data) => {
+    ([positions]) = data;
+
+    positionJump = 0;
+    untilTick = 0;
+    tick = -1;
+    row = 63;
+    delay = 0;
+
+    self[15](125);
+    self[15](6);
+    playing = true;
+  }
+
+  const advance = () => {
+    if (!playing) return;
+
+    if (--untilTick <= 0) {
+      untilTick += samplesPerTick;
+      on_tick();
+    }
+
+    apply_channels(channel => channel.advance());
+  }
+
+  // effects
 
   const self = {
-    init(worklet, audioContextSampleRate) {
-      ({ channels, port }) = worklet;
-
-      apply_channels(channel => channel.init(audioContextSampleRate));
-      sampleRate = audioContextSampleRate;
-      positionJump = rowJump = -1;
-      looping = false;
-    },
-
-    play(data) {
-      ([positions]) = data;
-
-      positionJump = 0;
-      untilTick = 0;
-      tick = -1;
-      row = 63;
-      delay = 0;
-
-      self[15](125);
-      self[15](6);
-      playing = true;
-    },
-
-    advance() {
-      if (!playing) return;
-
-      if (--untilTick <= 0) {
-        untilTick += samplesPerTick;
-        on_tick();
-      }
-
-      apply_channels(channel => channel.advance());
-    },
-
-    // effects
-
     11(data, tick) { // position jump
       if (!tick) {
         positionJump = xy(data);
@@ -437,47 +434,52 @@ mdlr('demo:modplayer:worklet:player', m => {
     }
   };
 
-  return self;
+  return [init, play, advance];
 })
 
 mdlr('demo:modplayer:worklet', m => {
 
-  registerProcessor('demo:modplayer:worklet', class extends AudioWorkletProcessor {
+  registerProcessor('mod', class extends AudioWorkletProcessor {
 
-    channels = [];
-    player = m.require('demo:modplayer:worklet:player');
+    #internals;
 
     constructor() {
       super();
 
-      this.port.onmessage = ({ data }) => {
-        const [, channels] = data;
-        this.channels = channels.map(channel => m.require('demo:modplayer:worklet:channel', { ':inject': channel }));
-        this.player.init(this, sampleRate);
-        this.player.play(data);
+      const { port } = this;
+
+      port.onmessage = ({ data: [positions, data_channels] }) => {
+        const [init, play, advance] = m.require('demo:modplayer:worklet:player');
+
+        const channels = data_channels.map(channel => m.require('demo:modplayer:worklet:channel', { channel }));
+        this.#internals = [
+          channels,
+          advance
+        ];
+
+        init([channels, port, sampleRate]);
+        play([positions]);
       }
     }
 
     process(_, outputs) {
-      const { channels, player } = this;
-
+      let [channels, advance] = this.#internals;
       let samples = 0;
 
       outputs.forEach(([output], ch) => {
+        if (!channels[ch]) return;
+
         // assume that all outputs are of the same length
         channels[ch].output = output;
         // should be 128 as render quantum
         samples = output?.length ?? 0;
       });
 
-      // try {
-        while (--samples >= 0) {
-          player.advance();
-        }
-      // }
-      // catch (e) {
-      //   this.port.postMessage(['trace', e]);
-      // }
+      while (--samples >= 0) {
+        advance();
+      }
+
+      // channels.forEach(channel => channel.output = null);
 
       return true;
     }

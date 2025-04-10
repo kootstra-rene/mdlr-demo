@@ -27,8 +27,7 @@ mdlr('[web]tutorial:firewatch-app', m => {
   > main {
     height: 100%;
     width: 100%;
-    overflow: hidden;
-    overflow-y: auto;
+    overflow: hidden auto;
     position: relative;
 
     > div {
@@ -46,7 +45,7 @@ mdlr('[web]tutorial:firewatch-app', m => {
   > div {
     position: fixed;
     width: 100%;
-    overflow:hidden;
+    overflow: hidden;
     text-align: center;
 
     > span {
@@ -60,7 +59,7 @@ mdlr('[web]tutorial:firewatch-app', m => {
     }
   }
 
-  > div > img, main > img {
+  > div > img, > main > img {
     position: relative;
     height: 712px;
     width: 2400px;

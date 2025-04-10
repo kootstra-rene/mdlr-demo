@@ -59,7 +59,7 @@ mdlr('[web]demo:realworld-profile', m => {
       return this.profile.following ? 'Unfollow' : 'Follow';
     }
 
-    async click(e) {
+    async click() {
       const {profile, actions} = this;
 
       await (profile.following ? actions.unfollow : actions.follow)(profile);

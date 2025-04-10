@@ -1,16 +1,21 @@
 mdlr('[web]demo:modplayer-analyser', m => {
   const DPR = devicePixelRatio;
-  const WIDTH = 96;
-  const HEIGHT = 48;
+  const WIDTH = 128;
+  const HEIGHT = 80;
 
   m.html`<canvas{} width="${WIDTH * DPR}" height="${HEIGHT * DPR}" />`;
 
   m.style`
-  display: block;
+  display: contents;
+  cursor: pointer;
 
   > canvas {
     width: ${WIDTH}px;
     height: ${HEIGHT}px;
+    outline: none; 
+    border: none;
+    background-color: #222;
+    color: cyan;
   }
   `;
 
@@ -19,13 +24,13 @@ mdlr('[web]demo:modplayer-analyser', m => {
     analyser;
     #context;
     #dataArray = new Float32Array(WIDTH);
+    mute;
 
     connected() {
-      const context = this.#context = this.canvas.getContext('2d', { alpha: true }); // todo: fix web plugin to support just context
+      const context = this.#context = this.canvas.getContext('2d', { alpha: false }); // todo: fix web plugin to support just context
       context.imageSmoothingEnabled = false;
-      context.imageSmoothingQuality = 'high';
-      context.strokeStyle = "black";
-      context.lineWidth = 1;
+      // context.imageSmoothingQuality = 'high';
+      context.lineWidth = 1.5 / DPR;
 
       context.translate(0.5, 0.5);
       context.scale(DPR, DPR);
@@ -41,8 +46,10 @@ mdlr('[web]demo:modplayer-analyser', m => {
 
       analyser.getFloatTimeDomainData(dataArray);
 
-      context.clearRect(-1, -1, WIDTH + 1, HEIGHT + 1);
+      context.fillStyle = this.mute ? '#000' : '#2224';
+      context.fillRect(-1, -1, WIDTH + 1, HEIGHT + 1);
       context.beginPath();
+      context.strokeStyle = this.mute ? 'darkcyan' : 'cyan';
 
       let x = 0;
 
@@ -60,6 +67,8 @@ mdlr('[web]demo:modplayer-analyser', m => {
       }
 
       context.stroke();
+
+      // return 1000/25;
     }
   }
 })
@@ -77,15 +86,17 @@ mdlr('[web]demo:modplayer-channel', m => {
     'f#', 'g-', 'g#', 'a-', 'a#', 'b-'];
 
   const paula = new Map([
+    1712, 1616, 1525, 1440, 1357, 1281, 1209, 1141, 1077, 1017, 961, 907, // C-0 to B-0 Finetune 0
     856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453, // C-1 to B-1 Finetune 0
     428, 404, 381, 360, 339, 320, 302, 285, 269, 254, 240, 226, // C-2 to B-2 Finetune 0
     214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113, // C-3 to B-3 Finetune 0
-  ].map((a, i) => [a, `${paula_notes[i % 12]}${1 + (i / 12) | 0}`]));
+    107, 101, 95, 90, 85, 80, 76, 71, 67, 64, 60, 57, // C-4 to B-4 Finetune 0
+  ].map((a, i) => [a, `${paula_notes[i % 12]}${(i / 12) | 0}`]));
 
   m.html`
-  <modplayer-analyser{=} />
+  <modplayer-analyser{=} on{click} />
   {#each o in offsets}
-    <div class="o{o}">{note(o)}</div>
+    <div class="{o ? false : 'center'}">{note(o)}</div>
   {/each}
   `;
 
@@ -97,8 +108,9 @@ mdlr('[web]demo:modplayer-channel', m => {
     text-align: center;
     line-height: 1rem;
     height: 1rem;
+    user-select: none;
 
-    &.o0 {
+    &.center {
       background-color: gray;
     }
   }
@@ -111,14 +123,16 @@ mdlr('[web]demo:modplayer-channel', m => {
   return class {
     offsets = [];
     analyser;
+    gain;
     notes;
     row;
+    mute = false;
 
     note(o) {
       const { notes, row } = this;
       const pattern = row >>> 6;
       const pattern_row = (row & 63) + o;
-      if (!notes || !valid_row(pattern_row)) return '';
+      if (!notes || !valid_row(pattern_row)) return '\xa0';
 
       const requested_row = (pattern << 6) | pattern_row;
       const note = notes[requested_row] ?? 0;
@@ -126,20 +140,63 @@ mdlr('[web]demo:modplayer-channel', m => {
       const period = (note >>> 16) & 0xfff;
       const instrument = ((note >>> 24) & 0xf0) | ((note >>> 12) & 0x0f);
 
-      return `${paula.get(period) ?? '---'} ${hex(instrument & 31, 2)} ${effect ? hex(effect, 3) : '...'}`;
+      return `${paula.get(period) ?? '\xb7\xb7\xb7'} ${instrument ? hex(instrument & 31, 2) : '\xb7\xb7'} ${'\xb7\xb7'} ${effect ? hex(effect, 3) : '\xb7\xb7\xb7'}`;
     }
+
+    click() {
+      this.mute = !this.mute;
+      this.gain.gain.value = this.mute ? 0 : 0.8;
+    }
+
+    $stable() {
+      return [this.row];
+    }
+  }
+
+})
+
+mdlr('[web]demo:modplayer-files', m => {
+
+  m.html`
+  <select id="song" on{change}>
+    <option disabled hidden>choose</option>
+    {#each [name, u] in files}
+      <option value="{u}" selected={u === url}>{name}</option>
+    {/each}
+  </select>
+  `;
+
+  return class {
+    files;
+    select;
+    url;
+
+    change(e) {
+      this.select(this.url = e.target.value);
+    }
+
+    $stable() {
+      return [this.url];
+    }
+
   }
 
 })
 
 mdlr('[web]demo:modplayer-app', m => {
 
+  m.require('[web]demo:modplayer-files');
   m.require('[web]demo:modplayer-channel');
 
   const mod_type = new Map([
     ['M.K.', { num_channels: 4 }],
     ['8CHN', { num_channels: 8 }],
+    ['12CH', { num_channels: 12 }],
+    ['16CH', { num_channels: 16 }],
     ['20CH', { num_channels: 20 }],
+    ['24CH', { num_channels: 24 }],
+    ['28CH', { num_channels: 28 }],
+    ['32CH', { num_channels: 32 }],
   ]);
 
   const text = (view, base, size) => {
@@ -147,93 +204,142 @@ mdlr('[web]demo:modplayer-app', m => {
     return String.fromCodePoint(...nameBytes).trim();
   }
 
+  const modarchive = id => `https://api.modarchive.org/downloads.php?moduleid=${id}`;
+
   const $files = [
-    ['agony (intro)', 'https://api.modarchive.org/downloads.php?moduleid=124303'],
-    ['drum-bass', 'https://api.modarchive.org/downloads.php?moduleid=168110'],
-    ['another world', 'https://api.modarchive.org/downloads.php?moduleid=104957'],
-    ['speedball 2', 'https://api.modarchive.org/downloads.php?moduleid=130970'],
-    ['popcorn', 'https://api.modarchive.org/downloads.php?moduleid=52767'],
-    ['silkworm', 'https://api.modarchive.org/downloads.php?moduleid=83115'],
-    ['desert-strike', 'https://api.modarchive.org/downloads.php?moduleid=68835'],
-    ['space-debris', 'https://api.modarchive.org/downloads.php?moduleid=57925'],
-    ['shadow of the beast (title)', 'https://media.demozoo.org/music/ba/d2/biititle.MOD'],
-    ['shadow of the beast (gameover)', 'https://api.modarchive.org/downloads.php?moduleid=90997'],
-    ['shadow of the beast (attack)', 'https://api.modarchive.org/downloads.php?moduleid=104018'],
-    ['shadow of the beast 2', 'https://api.modarchive.org/downloads.php?moduleid=125974'],
-    ['pinball illusions', 'https://api.modarchive.org/downloads.php?moduleid=55058'],
-    ['her 4', 'https://ftp.modland.com/pub/modules/Protracker/Estrayk/her%2041.mod'],
-    ['swiv (title)', 'https://api.modarchive.org/downloads.php?moduleid=169441'],
-    ['amiga power', 'https://api.modarchive.org/downloads.php?moduleid=65565'],
-    ['lotus2 title', 'https://api.modarchive.org/downloads.php?moduleid=87180'],
-    ['cannon fodder', 'https://api.modarchive.org/downloads.php?moduleid=34568'],
-    ['ambient power', 'https://api.modarchive.org/downloads.php?moduleid=33431'],
-    ['projectx', 'https://api.modarchive.org/downloads.php?moduleid=56660'],
-    ['sweet dreams', 'https://api.modarchive.org/downloads.php?moduleid=167668'],
-    ['axelf', 'https://api.modarchive.org/downloads.php?moduleid=32394'],
-    ['elysium', 'https://api.modarchive.org/downloads.php?moduleid=40475'],
-    ['visions', 'https://api.modarchive.org/downloads.php?moduleid=37530'],
-    ['deadline caught me', 'https://api.modarchive.org/downloads.php?moduleid=194236'],
-    ['classic', 'https://api.modarchive.org/downloads.php?moduleid=160640'],
-    ['stardust', 'https://api.modarchive.org/downloads.php?moduleid=59344'],
-    ['pofessional tracker', 'https://www.stef.be/bassoontracker/demomods/hoffman_and_daytripper_-_professional_tracker.mod'],
-    ['enigma', 'https://www.stef.be/amiga/mod/enigma.mod'],
-    ['der weg des kriegers', 'https://api.modarchive.org/downloads.php?moduleid=154946'],
-    ['depech mode mix', 'https://api.modarchive.org/downloads.php?moduleid=162419'],
-    ['autobahn', 'https://api.modarchive.org/downloads.php?moduleid=121128'],
-    ['deep house nine', 'https://api.modarchive.org/downloads.php?moduleid=112714'],
-    ['plasma sucker', 'https://api.modarchive.org/downloads.php?moduleid=113391'],
-    ['beast in castle', 'https://api.modarchive.org/downloads.php?moduleid=103989'],
-    ['underwater-remix', 'https://api.modarchive.org/downloads.php?moduleid=58742'],
-    ['airwolf', 'https://api.modarchive.org/downloads.php?moduleid=159538'],
-    ['menu magic iii', 'https://api.modarchive.org/downloads.php?moduleid=127959'],
-    ['the amen breaks', 'https://api.modarchive.org/downloads.php?moduleid=119507'],
-    ['krunk\'d','https://api.modarchive.org/downloads.php?moduleid=175221'],
-    // ['the sectret', 'https://api.modarchive.org/downloads.php?moduleid=194298#thunder_-_the_secret.symmod']
+    ['agony (intro)', modarchive(124303)],
+    ['drum-bass', modarchive(168110)],
+    ['another world', modarchive(104957)],
+    ['speedball 2', modarchive(130970)],
+    ['popcorn', modarchive(52767)],
+    ['silkworm', modarchive(83115)],
+    ['desert-strike', modarchive(68835)],
+    ['space-debris', modarchive(57925)],
+    ['shadow of the beast (gameover)', modarchive(90997)],
+    ['shadow of the beast (attack)', modarchive(104018)],
+    ['shadow of the beast 2', modarchive(125974)],
+    ['shadow of the beast 3 (intro)', modarchive(126132)],
+    ['pinball illusions', modarchive(55058)],
+    ['her 4', modarchive(45463)],
+    ['swiv (title)', modarchive(169441)],
+    ['amiga power', modarchive(65565)],
+    ['lotus2 title', modarchive(87180)],
+    ['cannon fodder', modarchive(34568)],
+    ['ambient power', modarchive(33431)],
+    ['projectx', modarchive(56660)],
+    ['sweet dreams', modarchive(167668)],
+    ['axelf', modarchive(32394)],
+    ['elysium', modarchive(40475)],
+    ['visions', modarchive(37530)],
+    ['deadline caught me', modarchive(194236)],
+    ['eyegaboom', modarchive(43053)],
+    ['classic', modarchive(160640)],
+    ['stardust', modarchive(59344)],
+    ['pofessional tracker', modarchive(174955)],
+    ['enigma', modarchive(42146)],
+    ['der weg des kriegers', modarchive(154946)],
+    ['depech mode mix', modarchive(162419)],
+    ['autobahn', modarchive(121128)],
+    ['deep house nine', modarchive(112714)],
+    ['plasma sucker', modarchive(113391)],
+    ['beast in castle', modarchive(103989)],
+    ['underwater-remix', modarchive(58742)],
+    ['airwolf', modarchive(159538)],
+    ['menu magic iii', modarchive(127959)],
+    ['the amen breaks', modarchive(119507)],
+    ['krunk\'d', modarchive(175221)],
+    ['twilight chuckles', modarchive(66793)],
+    ['guitar slinger', modarchive(42560)],
+    ['physical presence', modarchive(104644)],
+    ['resonance2', modarchive(54859)],
+    ['fountain', modarchive(40748)],
+    ['giel song', modarchive(183132)],
+    ['trans atlantic', modarchive(105709)],
+    ['living insanity', modarchive(48324)],
+    ['mk', modarchive(52117)],
+    ['g thang', modarchive(180323)],
+    ['mosquito', modarchive(186024)],
+    ['japan hills', modarchive(65727)],
+    ['open the eyes', modarchive(61278)],
+    ['lonesome', modarchive(48739)],
+    ['thrones', modarchive(172293)],
+    ['try again', modarchive(58443)],
+    ['dope', modarchive(35344)],
+    ['ravers megamix', modarchive(62009)],
+    ['slow step', modarchive(207783)],
+    ['cream of the earth', modarchive(120017)],
+    ['playing with delay', modarchive(67779)]
+
   ];
 
   m.html`
-  <select id="song" on{change}>
-    <option disabled hidden>choose</option>
-    ${$files.map(([name, url]) => `<option value="${url}" selected={"${url}" === url}>${name}</option>`).join('')}
-  </select>
-  <span> {position}</span><span> - </span><span>{row >>> 6}</span><span>:</span><span>{row & 63}</span>
+  <modplayer-files{=} />
   <div/>
   {#each [notes],i in channels}
-    <modplayer-channel{=} notes={} analyser={analysers[i]} />
+    <modplayer-channel{=} .notes={} .gain={gains[i]} .analyser={analysers[i]} />
   {/each}
   `;
 
+  m.style`
+  display: inline-block;
+  background: rgba(223, 223, 223, 0.5);
+  border-radius: 0.5rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(223, 223, 223, 0.25);
+  padding: 0.25rem;
+  position: relative;
+  left: 50%;
+  translate: -50% -50%;
+  top: 50%;
+  min-width: calc(512px + 0.65rem);
+  max-width: calc(1024px + 0.65rem);
+  overflow: auto;
+  max-height: 100%;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  `;
+
   return class {
-    // offsets = [-15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
     offsets = [-7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7];
     row = 0;
     position;
     positions;
     worklet;
-    url;
     channels;
+    audioContext;
+    files = $files;
+    url;
 
     analysers = [];
+    gains = [];
     num_channels;
 
-    async change(e) {
-      let { worklet, analysers } = this;
+    async select(url) {
+      let { worklet, analysers, gains, audioContext } = this;
 
-      worklet?.port.close();
+      audioContext?.suspend();
+
       worklet?.disconnect();
+      worklet?.port.close();
+      gains?.forEach(n => n.disconnect());
+      analysers?.forEach(n => n.disconnect());
 
-      const response = await fetch(this.url = e.target.value);
+      const response = await fetch(this.url = url);
       const array_buffer = await response.arrayBuffer();
       const state = this.loadFile(array_buffer);
 
-      const audio = new AudioContext;
-      // const audio = new AudioContext({sampleRate:28837}); // paula
-      await audio.audioWorklet.addModule('/app/unit/demo:modplayer:worklet');
+      audioContext?.close();
+
+      audioContext = this.audioContext = new AudioContext();
+      await audioContext.audioWorklet.addModule('/bundle/unit/demo:modplayer:worklet');
 
       const [, channels, num_channels] = state;
       this.channels = channels;
       this.num_channels = num_channels;
-      worklet = this.worklet = new AudioWorkletNode(audio, 'demo:modplayer:worklet', {
+      worklet = this.worklet = new AudioWorkletNode(audioContext, 'mod', {
         numberOfOutputs: num_channels,
         numberOfInputs: 0,
       });
@@ -253,21 +359,27 @@ mdlr('[web]demo:modplayer-app', m => {
         }
       }
 
-      const merger = audio.createChannelMerger(2);
-      const filter = new BiquadFilterNode(audio, { frequency: audio.sampleRate / 2 });
+      const merger = audioContext.createChannelMerger(2);
+      // const filter = new BiquadFilterNode(audioContext, { frequency: audioContext.sampleRate / 2 });
       const analyserConfig = { fftSize: 256 };
-
-      merger.connect(filter);
-      filter.connect(audio.destination);
-
       const merger_mapping = [0, 1, 1, 0];
+
+      // merger.connect(filter);
+      // filter.connect(audioContext.destination);
+      merger.connect(audioContext.destination);
+
       analysers.length = num_channels;
       for (let ch = 0; ch < num_channels; ++ch) {
-        analysers[ch] = new AnalyserNode(audio, analyserConfig)
-        worklet.connect(merger, ch, merger_mapping[ch & 3]);
-        worklet.connect(analysers[ch], ch);
+        gains[ch] = new GainNode(audioContext);
+        gains[ch].gain.value = 0.8;
+        gains[ch].connect(merger, 0, merger_mapping[ch & 3]);
+        worklet.connect(gains[ch], ch);
+
+        analysers[ch] = new AnalyserNode(audioContext, analyserConfig);
+        gains[ch].connect(analysers[ch], 0);
       }
       this.worklet.port.postMessage(state);
+      audioContext.resume();
     }
 
     loadFile(array_buffer) {
@@ -275,8 +387,8 @@ mdlr('[web]demo:modplayer-app', m => {
       const name = text(view, 0, 20);
       const type = text(view, 1080, 4);
 
-      const known_type =  mod_type.get(type);
-      // console.log(`*** ${name} (${type}) ***`);
+      const known_type = mod_type.get(type);
+      console.log(`*** ${name} (${type}) ***`);
 
       const max_samples = known_type ? 31 : 15;
       const pattern_base = known_type ? 950 : 470;
@@ -311,7 +423,7 @@ mdlr('[web]demo:modplayer-app', m => {
 
         samples.push([
           name,
-          [...audio].map(a => (+a / 196.0)),
+          new Float32Array([...audio].map(a => (+a / 196.0))),
           size,
           volume,
           repeatOffset,

@@ -53,9 +53,9 @@ mdlr('[web]tutorial:svg-clock', m => {
     logo = 'mdlr';
     offset = 0;
 
-    hours;
-    minutes;
-    seconds;
+    hours = 0;
+    minutes = 0;
+    seconds = 0;
 
     beforeRender() {
       const tzOffset = (this.offset + utcOffset) * 60 * 1000;

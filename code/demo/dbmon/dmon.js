@@ -48,7 +48,7 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
         }
       }
 
-      &[class=""] > * {
+      & td[class=""] {
         display: none;
       }
 
@@ -84,32 +84,30 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
           width: 0;
         }
 
-        & {
-          > div.arrow {
-            border-width: 11px;
-            border-right-width: 0;
-            border-left-color: rgba(0,0,0,.25);
-            margin-top: -11px;
-            right: -11px;
-            top: 50%;
+        > div.arrow {
+          border-width: 11px;
+          border-right-width: 0;
+          border-left-color: rgba(0,0,0,.25);
+          margin-top: -11px;
+          right: -11px;
+          top: 50%;
 
-            &:after {
-              border-width: 10px;
-              border-left-color: #fff;
-              border-right-width: 0;
-              bottom: -10px;
-              content: "";
-              right: 1px;
-            }
+          &:after {
+            border-width: 10px;
+            border-left-color: #fff;
+            border-right-width: 0;
+            bottom: -10px;
+            content: "";
+            right: 1px;
           }
         }
       }
     }
 
-    td.query {
+    > td.query {
       position: relative;
 
-      &:hover .popover {
+      &:hover > div.popover {
         display: block;
         left: -100%;
         width: 100%;
@@ -120,6 +118,8 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
   return class {
     dbname;
     lastSample = {};
+
+    // beforeRender = () => 1000/10;
   }
 
 })
@@ -138,8 +138,6 @@ mdlr('[web]demo:db-mon:data-bases', m => {
 
   m.style`
     display: block;
-    overflow: scroll;
-    height: 100%;
 
     table {
       border-collapse: collapse;
@@ -171,6 +169,9 @@ mdlr('[web]demo:db-mon:settings-panel', m => {
     padding: 8px;
     position: sticky;
     width: 100%;
+    top: 0;
+    background-color: white;
+    z-index:1;
 
     > label {
       font-weight: 700;
@@ -209,6 +210,13 @@ mdlr('[web]demo:db-mon', m => {
     <stats-memory />
   `;
 
+  m.style`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden auto;
+  `;
+
   m.global`
     body {
       font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
@@ -226,7 +234,7 @@ mdlr('[web]demo:db-mon', m => {
 
     construct() {
       setInterval(() => {
-        this.databases = ENV.generateData(false).toArray();
+        this.databases = ENV.generateData(true).toArray();
         this.renderer?.ping();
       });
     }

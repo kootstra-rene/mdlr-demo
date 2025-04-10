@@ -73,6 +73,7 @@ mdlr('[web]demo:mvc-todo-item', m => {
       display: none;
       position: absolute;
       font-size: 30px;
+      font-weight: bold;
       padding: 10px;
       width: 40px;
       right:10px;
@@ -92,12 +93,6 @@ mdlr('[web]demo:mvc-todo-item', m => {
 
     &:hover > button {
       display: block;
-    }
-  `;
-
-  m.global`
-    body {
-      contain: unset;
     }
   `;
 
@@ -156,7 +151,7 @@ mdlr('[web]demo:mvc-todo', m => {
 
       <section id="overview" hidden={!items.length}>
       {#each i in filtered}
-        <mvc-todo-item{=i} change={t=>i.description=t} select={()=>i.completed=!i.completed} destroy={()=>remove(i)}/>
+        <mvc-todo-item{=i} .change={t=>i.description=t} .select={()=>i.completed=!i.completed} .destroy={()=>remove(i)}/>
       {/each}
       </section>
 
@@ -184,10 +179,11 @@ mdlr('[web]demo:mvc-todo', m => {
       background: #f5f5f5;
       color: #111111;
       min-width: 230px;
-      max-width: 550px;
+      max-width: min(90%, 700px);
       margin: 0 auto;
       font-weight: 300;
-      overflow:auto
+      overflow: auto;
+      contain: unset;
     }
 
     button {

@@ -14,7 +14,7 @@ mdlr('[web]tutorial:each-collection', m => {
 mdlr('[web]tutorial:each-set', m => {
   m.require('[web]tutorial:each-collection');
 
-  m.html`<each-collection collection={set}/>`;
+  m.html`<each-collection .collection={set}/>`;
 
   return class {
     set = new Set(['some', 'words']);
@@ -25,7 +25,7 @@ mdlr('[web]tutorial:each-set', m => {
 mdlr('[web]tutorial:each-map', m => {
   m.require('[web]tutorial:each-collection');
 
-  m.html`<each-collection collection={map}/>`;
+  m.html`<each-collection .collection={map}/>`;
 
   return class {
     map = new Map([['a', 'some'], ['b', 'words']])
@@ -36,7 +36,7 @@ mdlr('[web]tutorial:each-map', m => {
 mdlr('[web]tutorial:each-array', m => {
   m.require('[web]tutorial:each-collection');
 
-  m.html`<each-collection collection={array}/>`;
+  m.html`<each-collection .collection={array}/>`;
 
   return class {
     array = ['some', 'words'];
