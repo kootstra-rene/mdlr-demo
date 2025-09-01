@@ -27,7 +27,7 @@ mdlr('[web]experiments:slot-usage', m => {
   `;
 
   m.style`
-    > slot-support [slot="caption"] {
+    > slot-support > [slot="caption"] {
       border: 1px solid red;
     }
   `;

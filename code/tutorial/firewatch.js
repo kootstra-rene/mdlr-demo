@@ -1,10 +1,10 @@
 // todo: explain why it is better to us element scroll event i.s.o. window scroll event. (local vs global scope)
-mdlr('[web]tutorial:firewatch-app', m => {
+mdlr('[web]firewatch-app', m => {
 
   const FIRE_WATCH_GAME_IMAGE = 'https://www.firewatchgame.com/images/parallax/parallax';
 
   m.html`
-  {#each l,i in layers}
+  {#each l, i in layers}
     <div style="top: {-scrollTop * (l / layers.length)}px">
       <img alt="layer-#{l}" src="${FIRE_WATCH_GAME_IMAGE}{l}.png"/>
       {#if l === 7}
@@ -23,7 +23,11 @@ mdlr('[web]tutorial:firewatch-app', m => {
   display: block;
   background-color: rgb(32,0,1);
   height: 100%;
- 
+  max-width: 1920px;
+  left: 50%;
+  transform: translateX(-50%);
+  position: absolute;
+
   > main {
     height: 100%;
     width: 100%;

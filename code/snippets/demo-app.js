@@ -107,7 +107,8 @@ mdlr('[web]snippets:demo-app', m => {
         transition: 150ms;
         transition-property: gap, grid-template-rows;
 
-        box-shadow: 2px 2px 5px #222;
+        border-radius: 0.25rem;
+        box-shadow: 2px 2px 5px #0008;
 
         > :first-child {
           height: 1.6rem;

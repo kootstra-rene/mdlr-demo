@@ -1,4 +1,4 @@
-mdlr('audio:worklet', m => {
+mdlr('audio:worklet', () => {
 
   registerProcessor('audio:worklet', class extends AudioWorkletProcessor {
 

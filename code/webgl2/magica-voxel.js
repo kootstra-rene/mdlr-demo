@@ -283,6 +283,12 @@ mdlr('[web]webgl-magica-voxel', m => {
     return inverse_camera;
   }
 
+  const TRANSFROM_VECTORS = [
+    vec3.fromValues(1.0, 0.0, 0.0),
+    vec3.fromValues(0.0, 1.0, 0.0),
+    vec3.fromValues(0.0, 0.0, 1.0),
+  ];
+
   return class {
     canvas;
     gl;
@@ -321,6 +327,7 @@ mdlr('[web]webgl-magica-voxel', m => {
       // const res = await fetch('/docs/res/rocky-mossy-stairs.vox');
       // const res = await fetch('/docs/res/odyssey_scene.vox');
       const res = await fetch('/docs/res/red_booth_solid.vox');
+      // const res = await fetch('/docs/res/chr_knight.vox');
       // const res = await fetch('/docs/res/street_scene.vox');
       // const res = await fetch('/docs/res/zombie.vox');
       // const res = await fetch('/docs/res/tank.vox');
@@ -341,20 +348,20 @@ mdlr('[web]webgl-magica-voxel', m => {
       // const res = await fetch('/docs/res/huge/castle.vox');
       // const res = await fetch('/docs/res/huge/nuke.vox');
 
+      // const res = await fetch('/docs/res/test_multiple_model_scene.vox');
+
+
       const data = await res.arrayBuffer();
       let state = vox_loader(data);
-      console.log('state:', state);
-      let scene = this.buildScene(state);
+      let scene = this.buildScene(state, { m: mat4.create(), voxels: [] });
+      this.adjustSceneDimensions(scene);
+      console.log('scene:', scene);
+
 
       this.makeSceneXYZ(scene);
-      console.log('scene:', scene);
       scene = this.makeSceneHollow(scene);
-      console.log('hollow:', scene);
 
       const chunks = this.buildModelChunks(scene);
-      console.log('chunks:', chunks);
-      // todo: remove invisible voxels from chunks (neighbour count === 6 ?)
-      // todo: remove invisible faces from chunks (touching faces of 2 neighbouring visible voxels)
 
       const { maxX, maxY, maxZ, minX, minY, minZ } = scene;
 
@@ -489,7 +496,6 @@ mdlr('[web]webgl-magica-voxel', m => {
     }
 
     frame = 0;
-    // frameTimes = [];
     beforeRender(now) {
       // const {frameTimes} = this;
 
@@ -504,7 +510,18 @@ mdlr('[web]webgl-magica-voxel', m => {
       // return 1000/1;
     }
 
-    buildScene(state, scene = { translate: { x: 0, y: 0, z: 0 } }, nodeId = 0, depth = 0) {
+    adjustSceneDimensions(scene) {
+      scene.voxels.forEach(record => {
+        if (scene.minX === undefined || record.x < scene.minX) scene.minX = record.x;
+        if (scene.maxX === undefined || record.x > scene.maxX) scene.maxX = record.x;
+        if (scene.minY === undefined || record.y < scene.minY) scene.minY = record.y;
+        if (scene.maxY === undefined || record.y > scene.maxY) scene.maxY = record.y;
+        if (scene.minZ === undefined || record.z < scene.minZ) scene.minZ = record.z;
+        if (scene.maxZ === undefined || record.z > scene.maxZ) scene.maxZ = record.z;
+      })
+    }
+
+    buildScene(state, scene, voxels = scene.voxels, nodeId = 0, matrix = mat4.create()) {
       const nodes = state.nodes;
 
       const node = (nodes?.get(nodeId)) ?? {
@@ -512,58 +529,52 @@ mdlr('[web]webgl-magica-voxel', m => {
         models: [{ modelId: 0 }]
       };
 
-      console.log('  '.repeat(depth) + node.kind);
-
+      // console.log(node.kind);
       switch (node.kind) {
-        case 'nTRN': {
-          const { x, y, z, m } = this.getTranslate(node);
-          mat3.transpose(m, m);
-          scene.m = m;
-          scene.translate.x += x;
-          scene.translate.y += y;
-          scene.translate.z += z;
-          this.buildScene(state, scene, node.childId, depth + 1);
-          scene.translate.x -= x;
-          scene.translate.y -= y;
-          scene.translate.z -= z;
-          // scene.translate = {x:0,y:0,z:0};
-        } break;
-
         case 'nGRP': {
           for (let childId of node.children) {
-            this.buildScene(state, scene, childId, depth + 1);
+            this.buildScene(state, scene, voxels, childId, matrix);
           }
+          console.log('nGRP', node, matrix, voxels);
         } break;
 
         case 'nSHP': {
           if (node.models.length !== 1) abort();
+
           const model = state.models[node.models[0].modelId];
-          const tr = scene.translate; // todo: should be done after the shape has been build?
-          scene.voxels = scene.voxels ?? [];
+          const { X, Y, Z } = model;
+
           for (let bits of model.xyzi) {
-            const x = tr.x + ((bits >>> 0) & 255);
-            const y = tr.y + ((bits >>> 8) & 255);
-            const z = tr.z + ((bits >>> 16) & 255);
+            const x = ((bits >>> 0) & 255) - (X >> 1);
+            const y = ((bits >>> 8) & 255) - (Y >> 1);
+            const z = ((bits >>> 16) & 255) - (Z >> 1);
             const i = (bits >>> 24) & 255;
 
+            const record = { id: -1, x, y, z, i, f: 63 };
             const v = vec3.fromValues(x, y, z);
-            // vec3.transformMat3(v, v, scene.m);
+            vec3.transformMat4(v, v, matrix);
+            record.x = v[0];
+            record.y = v[1];
+            record.z = v[2];
 
-            const record = { id: -1, x: v[0], y: v[1], z: v[2], i, f: -1 };
-            if (scene.minX === undefined || record.x < scene.minX) scene.minX = record.x;
-            if (scene.maxX === undefined || record.x > scene.maxX) scene.maxX = record.x;
-            if (scene.minY === undefined || record.y < scene.minY) scene.minY = record.y;
-            if (scene.maxY === undefined || record.y > scene.maxY) scene.maxY = record.y;
-            if (scene.minZ === undefined || record.z < scene.minZ) scene.minZ = record.z;
-            if (scene.maxZ === undefined || record.z > scene.maxZ) scene.maxZ = record.z;
-            scene.voxels.push(record);
+            voxels.push(record);
           }
+        } break;
 
+        case 'nTRN': {
+          const { m } = this.getTranslate(node);
+
+          const sub_voxels = [];
+          const transform_matrix = mat4.multiply(mat4.create(), matrix, m);
+          this.buildScene(state, scene, sub_voxels, node.childId, transform_matrix);
+
+          sub_voxels.forEach(record => {
+            voxels.push(record);
+          })
         } break;
 
         default: abort();
       }
-
       return scene;
     }
 
@@ -590,7 +601,7 @@ mdlr('[web]webgl-magica-voxel', m => {
       });
     }
 
-    makeSceneHollow(scene) {
+    makeSceneHollow(scene) { //return scene;
       console.time('occurrences')
       // slow...
       const occurrences = new Set;
@@ -651,34 +662,38 @@ mdlr('[web]webgl-magica-voxel', m => {
     }
 
     getTranslate(node) {
-      let [x, y, z] = [0, 0, 0];
-      let m = mat3.create();
+      let m = mat4.create();
 
       if (node.frames.length > 1) abort();
 
       node.frames[0].forEach(([k, v]) => {
         if (k === '_t') {
-          [x, y, z] = v.split(' ').map(a => +a);
+          const [x, y, z] = v.split(' ').map(a => +a);
+          m[12] = x; m[13] = y; m[14] = z;
         }
         if (k === '_r') {
           this.decodeRotationMatrix(m, +v);
-          console.log('matrix:', v, m);
         }
       });
 
-      return { x, y, z, m };
+      return { m };
     }
 
     decodeRotationMatrix(matrix, encoded) {
-      let index1 = (encoded >> 0) & 3;
-      let index2 = (encoded >> 2) & 3;
-      let sign1 = (encoded >> 4) & 1 ? -1 : 1;
-      let sign2 = (encoded >> 5) & 1 ? -1 : 1;
-      let sign3 = (encoded >> 6) & 1 ? -1 : 1;
+      const index1 = (encoded >> 0) & 3;
+      const index2 = (encoded >> 2) & 3;
+      const index3 = (3 - index2 - index1);
+      const sign1 = (encoded >> 4) & 1;
+      const sign2 = (encoded >> 5) & 1;
+      const sign3 = (encoded >> 6) & 1;
 
-      matrix[0 * 3 + index1] = sign1;
-      matrix[1 * 3 + index2] = sign2;
-      matrix[2 * 3 + (3 - (index1 + index2))] = sign3;
+      const v0 = vec3.clone(TRANSFROM_VECTORS[index1]); if (sign1) vec3.negate(v0, v0);
+      const v1 = vec3.clone(TRANSFROM_VECTORS[index2]); if (sign2) vec3.negate(v1, v1);
+      const v2 = vec3.clone(TRANSFROM_VECTORS[index3]); if (sign3) vec3.negate(v2, v2);
+
+      matrix[0] = v0[0]; matrix[1] = v1[0]; matrix[2] = v2[0];
+      matrix[4] = v0[1]; matrix[5] = v1[1]; matrix[6] = v2[1];
+      matrix[8] = v0[2]; matrix[9] = v1[2]; matrix[10] = v2[2];
 
       return matrix;
     }

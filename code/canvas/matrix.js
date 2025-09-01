@@ -1,6 +1,6 @@
 mdlr('canvas:matrix', m => {
 
-  const style = 'width:100%; height:100vh; margin:0; background-color: #000;';
+  const style = 'width:100%; height:100vh; margin:0; background-color: #000; overflow:hidden;';
 
   const doc = document.body;
 

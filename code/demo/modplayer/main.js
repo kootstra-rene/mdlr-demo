@@ -30,7 +30,7 @@ mdlr('[web]demo:modplayer-analyser', m => {
       const context = this.#context = this.canvas.getContext('2d', { alpha: false }); // todo: fix web plugin to support just context
       context.imageSmoothingEnabled = false;
       // context.imageSmoothingQuality = 'high';
-      context.lineWidth = 1.5 / DPR;
+      context.lineWidth = 0.75 * DPR;
 
       context.translate(0.5, 0.5);
       context.scale(DPR, DPR);
@@ -106,8 +106,8 @@ mdlr('[web]demo:modplayer-channel', m => {
 
   > div {
     text-align: center;
-    line-height: 1rem;
-    height: 1rem;
+    line-height: 0.9rem;
+    height: 0.9rem;
     user-select: none;
 
     &.center {
@@ -224,7 +224,7 @@ mdlr('[web]demo:modplayer-app', m => {
     ['swiv (title)', modarchive(169441)],
     ['amiga power', modarchive(65565)],
     ['lotus2 title', modarchive(87180)],
-    ['cannon fodder', modarchive(34568)],
+    ['cannon fodder', modarchive(171397)],
     ['ambient power', modarchive(33431)],
     ['projectx', modarchive(56660)],
     ['sweet dreams', modarchive(167668)],
@@ -273,7 +273,7 @@ mdlr('[web]demo:modplayer-app', m => {
   ];
 
   m.html`
-  <modplayer-files{=} />
+  <modplayer-files{=} class="{channels?.length ? 'open' : ''}" />
   <div/>
   {#each [notes],i in channels}
     <modplayer-channel{=} .notes={} .gain={gains[i]} .analyser={analysers[i]} />
@@ -299,6 +299,11 @@ mdlr('[web]demo:modplayer-app', m => {
 
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  modplayer-files.open {
+    display: block;
+    padding-bottom: 0.25rem;
   }
   `;
 

@@ -1,13 +1,13 @@
 // https://codepen.io/eltonkamami/full/ANpOQo
 mdlr('[web]canvas:particles-fun', m => {
-  const colors = ['#f35d4f', '#f36849', '#c0d988', '#6ddaf1', '#f1e85b'];
+  const colors = ['#f35d4f', '#c0d988', '#6ddaf1'];
   const rand = Math.random;
 
-  function Factory(w, h) {
+  function Factory(w, h, c) {
     this.x = (rand() * w);
     this.y = (rand() * h);
     this.rad = (rand() * 1) + 1.5;
-    this.rgba = colors[Math.round(rand() * 3)];
+    this.rgba = c;
     this.vx = (rand() * 5) - 2.5;
     this.vy = (rand() * 5) - 2.5;
   }
@@ -22,7 +22,7 @@ mdlr('[web]canvas:particles-fun', m => {
   display: block;
   height: 100%;
   width: 100%;
-  background-color: #222;
+  background-color: #000;
   position: absolute;
   overflow: hidden;
 
@@ -37,17 +37,20 @@ mdlr('[web]canvas:particles-fun', m => {
     height;
     width;
     particles = [];
-    patriclesNum = 1;
 
     connected(elem) {
       this.width = elem.clientWidth;
       this.height = elem.clientHeight;
-      this.patriclesNum = (this.width * this.height) / 3000;
+      const patriclesNum = ((this.width * this.height) / 3000 / 3) >>> 0;
 
-      for (let i = 0; i < this.patriclesNum; ++i) {
-        this.particles.push(new Factory(this.width, this.height));
+      for (let color of colors) {
+        const particles = [];
+        for (let i = 0; i < patriclesNum; ++i) {
+          particles.push(new Factory(this.width, this.height, color));
+        }
+        this.particles.push(particles);
+        console.log(particles.length);
       }
-
       this.#context = this.canvas.getContext('2d');
     }
 
@@ -59,18 +62,25 @@ mdlr('[web]canvas:particles-fun', m => {
 
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = 'lighter';
-      for (let i = 0; i < this.patriclesNum; ++i) {
-        let p1 = this.particles[i];
+
+      for (const particles of this.particles) {
+        this.#updateParticles(ctx, particles, w, h);
+      }
+
+      return 1000 / 50;
+    }
+
+    #updateParticles(ctx, particles, w, h) {
+      ctx.fillStyle = ctx.strokeStyle = particles[0].rgba;
+      ctx.linewidth = 0.5;
+
+      for (const p1 of particles) {
         let factor = 1.0;
 
         ctx.beginPath();
-        ctx.linewidth = 0.5;
-        ctx.fillStyle = 'transparent';
-        ctx.strokeStyle = p1.rgba;
-        for (let j = 0; j < this.patriclesNum; ++j) {
-          let p2 = this.particles[j];
+        for (const p2 of particles) {
 
-          if (p1.rgba === p2.rgba && findDistance(p1, p2) < 50) {
+          if (findDistance(p1, p2) < 50) {
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.stroke();
@@ -78,9 +88,6 @@ mdlr('[web]canvas:particles-fun', m => {
           }
         }
         ctx.closePath();
-
-        ctx.fillStyle = p1.rgba;
-        ctx.strokeStyle = p1.rgba;
 
         ctx.beginPath();
         ctx.arc(p1.x, p1.y, p1.rad * factor, 0, Math.PI * 2, true);
@@ -100,8 +107,6 @@ mdlr('[web]canvas:particles-fun', m => {
         if (p1.y > h) p1.vy *= -1;
         if (p1.y < 0) p1.vy *= -1;
       }
-
-      return 1000 / 50;
     }
   }
 

@@ -60,7 +60,7 @@ mdlr('[web]demo:db-mon:data-base-overview', m => {
         border-radius: 6px;
         box-shadow:0 5px 10px rgba(0,0,0,.2);
         display: none;
-        left: 0;
+        left: -100%;
         max-width: 276px;
         padding: 1px;
         position: absolute;
@@ -138,6 +138,7 @@ mdlr('[web]demo:db-mon:data-bases', m => {
 
   m.style`
     display: block;
+    background: #f9f9f9;
 
     table {
       border-collapse: collapse;
@@ -147,6 +148,9 @@ mdlr('[web]demo:db-mon:data-bases', m => {
 
     data-base-overview:nth-child(odd) {
       background: #f9f9f9;
+    }
+    data-base-overview:nth-child(even) {
+      background: white;
     }
   `;
 
